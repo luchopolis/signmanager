@@ -5,10 +5,12 @@ export class SignManager {
   private dbConnection: PoolClient | null = null;
 
   constructor(dbConnectionString: string) {
-    void this._initDb(dbConnectionString);
+    this._initDb(dbConnectionString).catch(error => {
+      console.error('Error initializing database connection:', error);
+    });
   }
 
-  async _initDb(connectionString: string): Promise<void> {
+  private async _initDb(connectionString: string): Promise<void> {
     this.dbConnection = await poolConnection(connectionString);
   }
 
