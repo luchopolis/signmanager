@@ -1,17 +1,15 @@
 import { PoolClient, QueryResult } from 'pg';
 import { poolConnection } from './connector/db';
 
-export class SignManager {
+const initDb = async (connectionString: string) => {
+  return await poolConnection(connectionString);
+};
+
+export class SignDbManager {
   private dbConnection: PoolClient | null = null;
 
-  constructor(dbConnectionString: string) {
-    this._initDb(dbConnectionString).catch(error => {
-      console.error('Error initializing database connection:', error);
-    });
-  }
-
-  private async _initDb(connectionString: string): Promise<void> {
-    this.dbConnection = await poolConnection(connectionString);
+  constructor(private dbManager: PoolClient) {
+    this.dbConnection = dbManager;
   }
 
   async loadTables(params: {
@@ -27,3 +25,12 @@ export class SignManager {
     return data;
   }
 }
+
+export const SignManager = async (
+  connectionString: string
+): Promise<SignDbManager> => {
+  const clientPool = await initDb(connectionString);
+
+  const managerInstance = new SignDbManager(clientPool);
+  return managerInstance;
+};
