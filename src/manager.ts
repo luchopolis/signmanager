@@ -1,7 +1,11 @@
 import { PoolClient, QueryResult } from 'pg';
 import { poolConnection } from './connector/db';
 import { IGroupTablesNode } from './interfaces/main';
-import { findElement, keysFromTablesObject } from './utils/table';
+import {
+  findElement,
+  keysFromTablesObject,
+  makeQueryBuilder,
+} from './utils/table';
 
 const initDb = async (connectionString: string) => {
   return await poolConnection(connectionString);
@@ -10,7 +14,7 @@ const initDb = async (connectionString: string) => {
 export class SignDbManager {
   private dbConnection: PoolClient | null = null;
 
-  constructor(private dbManager: PoolClient) {
+  constructor(dbManager: PoolClient) {
     this.dbConnection = dbManager;
   }
 
@@ -56,6 +60,19 @@ export class SignDbManager {
       dataGroup.push(elementDataGroup);
     }
     return dataGroup;
+  }
+
+  async resetIncrementQuery(tables: string[]): Promise<void> {
+    try {
+      await this.dbConnection?.query('BEGIN');
+      const queryTableReset = makeQueryBuilder(tables);
+      await this.dbConnection?.query(queryTableReset);
+      await this.dbConnection?.query('COMMIT');
+      console.log('Reset Increment ID Completed');
+    } catch (error: any) {
+      await this.dbConnection?.query('ROLLBACK');
+      console.error('ERROR: ResetIncrementQuery ->', error);
+    }
   }
 }
 

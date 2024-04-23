@@ -1,6 +1,6 @@
 {
   "name": "signmanager",
-  "version": "0.0.7-development",
+  "version": "0.0.8-development",
   "description": "Sign manager for DB",
   "main": "./lib/index.js",
   "files": [
