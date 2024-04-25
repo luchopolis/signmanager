@@ -13,16 +13,22 @@ export const keysFromTablesObject = (
 
 export const makeQueryBuilder = (tables: string[]): string => {
   let queryToExecute = '';
-  for (const table of tables) {
-    const query = `
-      truncate table ${table} CASCADE;
-      SELECT setval(pg_get_serial_sequence('${table}', 'id')
-                , COALESCE(max(id) + 1, 1)
-                  , false)
-      FROM   ${table};
-    `;
-    queryToExecute += query;
-  }
+  const tabletT = tables.map(e => `'${e}'`).join(',');
+  const multiQuery = `DO $$
+  DECLARE
+    table_name TEXT;
+    table_names TEXT[] := ARRAY[
+      ${tabletT}
+    ];
+  BEGIN
+    FOREACH table_name IN ARRAY table_names
+    LOOP
+        EXECUTE format('TRUNCATE TABLE %I CASCADE', table_name);
+        EXECUTE format('SELECT setval(pg_get_serial_sequence(%L, ''id''), COALESCE((SELECT MAX(id) FROM %I) + 1, 1), false)', table_name, table_name);
+    END LOOP;
+  END $$`;
+
+  queryToExecute = multiQuery;
 
   return queryToExecute;
 };
